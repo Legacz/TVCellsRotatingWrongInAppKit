@@ -13,6 +13,25 @@ let arrangedObjects : [ NSColor ] = [
 
 fileprivate let animRotationKey = "de.zeezide.view.rotation"
 
+extension CALayer {
+  
+  func copyState(to layer: CALayer) {
+    layer.backgroundColor = backgroundColor?.copy(alpha: 0.8)
+    layer.borderColor     = borderColor
+    layer.borderWidth     = borderWidth
+    layer.contents        = contents
+  }
+  
+  func clearState() {
+    //backgroundColor = NSColor.clear.cgColor
+    backgroundColor = NSColor.blue.cgColor
+    borderColor     = nil
+    borderWidth     = 0
+    contents        = nil
+  }
+  
+}
+
 public struct ZzViewAnimations {
   // Trampoline
   
@@ -49,13 +68,15 @@ public struct ZzViewAnimations {
       layer.frame            = rootLayer.bounds
       layer.autoresizingMask = [ .layerHeightSizable, .layerWidthSizable ]
       layer.anchorPoint      = CGPoint(x: 0.5, y: 0.5)
-      // layer.position      = center
       rootLayer.addSublayer(layer)
       
-      layer.backgroundColor = rootLayer.backgroundColor
-      layer.borderColor     = NSColor.white.cgColor // rootLayer.borderColor
-      layer.borderWidth     = 1 //rootLayer.borderWidth
-      layer.contents        = rootLayer.contents
+      //rootLayer.copyState(to: layer)
+      rootLayer.clearState()
+      //view.needsDisplay = true
+      #if true
+        layer.borderColor     = NSColor.white.cgColor // rootLayer.borderColor
+        layer.borderWidth     = 1 //rootLayer.borderWidth
+      #endif
 
       return layer
     }()
@@ -110,6 +131,7 @@ public struct ZzViewAnimations {
       // in here we just get radians, it doesn't add up (*repeat)
     }
     
+    layer.copyState(to: rootLayer)
     layer.removeFromSuperlayer()
   }
   
