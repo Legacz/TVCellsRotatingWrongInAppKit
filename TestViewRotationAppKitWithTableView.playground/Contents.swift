@@ -26,13 +26,40 @@ public struct ZzViewAnimations {
     case forward, backward
   }
   
+  var animationLayer : CALayer? {
+    guard let layer = view.layer else {
+      print("view got no (root) layer ...")
+      return nil
+    }
+    return layer.sublayers?.first
+  }
+  
   public func startRotation(speed     : TimeInterval = 1.0,
                             direction : Direction = .backward)
   {
-    guard let layer = view.layer else {
-      print("view got no layer ...")
+    guard let rootLayer = view.layer else {
+      print("\(#function): view got no layer ...")
       return
     }
+    
+    let layer : CALayer = {
+      if let layer = animationLayer { return layer }
+      
+      let layer = CALayer()
+      layer.frame            = rootLayer.bounds
+      layer.autoresizingMask = [ .layerHeightSizable, .layerWidthSizable ]
+      layer.anchorPoint      = CGPoint(x: 0.5, y: 0.5)
+      // layer.position      = center
+      rootLayer.addSublayer(layer)
+      
+      layer.backgroundColor = rootLayer.backgroundColor
+      layer.borderColor     = NSColor.white.cgColor // rootLayer.borderColor
+      layer.borderWidth     = 1 //rootLayer.borderWidth
+      layer.contents        = rootLayer.contents
+
+      return layer
+    }()
+    
 
     let fakeRepeat : Float = 10000
     
@@ -45,7 +72,7 @@ public struct ZzViewAnimations {
     
     #if os(macOS)
       layer.anchorPoint = CGPoint(x: 0.5, y: 0.5)
-      layer.position    = CGPoint(x: NSMidX(view.frame), y: NSMidY(view.frame))
+      //layer.position    = CGPoint(x: NSMidX(view.frame), y: NSMidY(view.frame))
         // center
     #endif
     
@@ -66,16 +93,24 @@ public struct ZzViewAnimations {
   func stopRotation() {
     print("stop anim \(view.identifier?.rawValue ?? "")")
     
-    guard let layer = view.layer else {
-      print("stopRotation: view got no layer ...")
+    guard let rootLayer = view.layer else {
+      print("\(#function): view got no layer ...")
       return
     }
+    guard let layer = animationLayer else {
+      print("\(#function): view got no layer ...")
+      return
+    }
+    
     let pos = layer.presentation()?.value(forKeyPath: "transform.rotation.z")
     layer.removeAnimation(forKey: animRotationKey)
     if let pos = pos {
-      layer.setValue(pos, forKeyPath: "transform.rotation.z")
+      layer    .setValue(pos, forKeyPath: "transform.rotation.z")
+      rootLayer.setValue(pos, forKeyPath: "transform.rotation.z")
       // in here we just get radians, it doesn't add up (*repeat)
     }
+    
+    layer.removeFromSuperlayer()
   }
   
 }
@@ -95,10 +130,9 @@ class LayerView : NSView {
   override init(frame: CGRect) {
     super.init(frame: frame)
     wantsLayer = true
-    reapplyLayerSettings()
   }
   required init?(coder decoder: NSCoder) {
-    fatalError("init(coder:) has not been implemented")
+    fatalError("\(#function) has not been implemented")
   }
   
   var backgroundColor : NSColor? = nil {
@@ -107,44 +141,6 @@ class LayerView : NSView {
     }
   }
 
-  func reapplyLayerSettings(from: String = #function) {
-    guard let layer = layer else {
-      print("reapplyLayerSettings(\(from)): view got no layer ...")
-      return
-    }
-    
-    let restartAnim = true
-    
-    let anim = layer.animation(forKey: animRotationKey)
-    if restartAnim && anim != nil {
-      uxAnim.stopRotation()
-    }
-    
-    // TODO: hardcoded, need to find something better
-    layer.anchorPoint = CGPoint(x: 0.5, y: 0.5)
-    layer.position    = center
-    print("reapply layer settings \(identifier?.rawValue ?? "") \(from) ..")
-    
-    if restartAnim {
-    #if true
-      if anim != nil {
-        uxAnim.startRotation()
-      }
-    #else
-      if let anim = anim { // TBD: does it store transforms, needs resetup?
-        layer.add(anim, forKey: animRotationKey)
-      }
-    #endif
-    }
-  }
-  
-  override open var frame:  NSRect { didSet { reapplyLayerSettings() } }
-  override open var bounds: NSRect { didSet { reapplyLayerSettings() } }
-  
-  override open func layout() { // this seems to have no effect
-    super.layout()
-    reapplyLayerSettings()
-  }
 }
 
 
