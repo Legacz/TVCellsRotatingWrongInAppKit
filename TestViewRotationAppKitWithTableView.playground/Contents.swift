@@ -23,8 +23,7 @@ extension CALayer {
   }
   
   func clearState() {
-    //backgroundColor = NSColor.clear.cgColor
-    backgroundColor = NSColor.blue.cgColor
+    backgroundColor = nil
     borderColor     = nil
     borderWidth     = 0
     contents        = nil
@@ -70,11 +69,10 @@ public struct ZzViewAnimations {
       layer.anchorPoint      = CGPoint(x: 0.5, y: 0.5)
       rootLayer.addSublayer(layer)
       
-      //rootLayer.copyState(to: layer)
+      rootLayer.copyState(to: layer)
       rootLayer.clearState()
-      //view.needsDisplay = true
-      #if true
-        layer.borderColor     = NSColor.white.cgColor // rootLayer.borderColor
+      #if false
+        layer.borderColor     = NSColor.black.cgColor // rootLayer.borderColor
         layer.borderWidth     = 1 //rootLayer.borderWidth
       #endif
 
@@ -157,9 +155,16 @@ class LayerView : NSView {
     fatalError("\(#function) has not been implemented")
   }
   
+  var animationLayer : CALayer? {
+    return layer?.sublayers?.first
+  }
+  var activeLayer : CALayer? {
+    return animationLayer ?? layer
+  }
+
   var backgroundColor : NSColor? = nil {
     didSet {
-      layer?.backgroundColor = backgroundColor?.cgColor
+      activeLayer?.backgroundColor = backgroundColor?.cgColor
     }
   }
 
