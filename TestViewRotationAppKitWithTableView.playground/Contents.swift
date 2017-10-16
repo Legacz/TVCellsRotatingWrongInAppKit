@@ -89,12 +89,6 @@ public struct ZzViewAnimations {
     a.isCumulative = true
     a.repeatCount  = 1 // 10
     
-    #if os(macOS)
-      layer.anchorPoint = CGPoint(x: 0.5, y: 0.5)
-      //layer.position    = CGPoint(x: NSMidX(view.frame), y: NSMidY(view.frame))
-        // center
-    #endif
-    
     print("start anim \(view.identifier?.rawValue ?? "") \(layer.position) ..")
 
     if let pos = layer.value(forKeyPath: "transform.rotation.z") as? Float {
@@ -124,9 +118,11 @@ public struct ZzViewAnimations {
     let pos = layer.presentation()?.value(forKeyPath: "transform.rotation.z")
     layer.removeAnimation(forKey: animRotationKey)
     if let pos = pos {
+      // in here we just get radians, it doesn't add up (*repeat)
       layer    .setValue(pos, forKeyPath: "transform.rotation.z")
       rootLayer.setValue(pos, forKeyPath: "transform.rotation.z")
-      // in here we just get radians, it doesn't add up (*repeat)
+      // FIXME: this may have the wrong anchor-point on macOS. We may need
+      //        to apply the rotation on the NSView instead?
     }
     
     layer.copyState(to: rootLayer)
